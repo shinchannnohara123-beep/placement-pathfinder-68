@@ -14,7 +14,203 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          applied_date: string | null
+          company_id: string | null
+          company_name: string
+          created_at: string
+          id: string
+          location: string | null
+          next_step: string | null
+          next_step_date: string | null
+          notes: string | null
+          package_lpa: number | null
+          role: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          applied_date?: string | null
+          company_id?: string | null
+          company_name: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          next_step?: string | null
+          next_step_date?: string | null
+          notes?: string | null
+          package_lpa?: number | null
+          role: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          applied_date?: string | null
+          company_id?: string | null
+          company_name?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          next_step?: string | null
+          next_step_date?: string | null
+          notes?: string | null
+          package_lpa?: number | null
+          role?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          allowed_branches: string[] | null
+          careers_url: string | null
+          created_at: string
+          cs_subjects: string[] | null
+          description: string | null
+          dsa_topics: string[] | null
+          hiring_season: string | null
+          hq_location: string | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          min_cgpa: number | null
+          name: string
+          process_steps: string[] | null
+          salary_max: number | null
+          salary_min: number | null
+          slug: string
+          tech_stack: string[] | null
+          website: string | null
+        }
+        Insert: {
+          allowed_branches?: string[] | null
+          careers_url?: string | null
+          created_at?: string
+          cs_subjects?: string[] | null
+          description?: string | null
+          dsa_topics?: string[] | null
+          hiring_season?: string | null
+          hq_location?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          min_cgpa?: number | null
+          name: string
+          process_steps?: string[] | null
+          salary_max?: number | null
+          salary_min?: number | null
+          slug: string
+          tech_stack?: string[] | null
+          website?: string | null
+        }
+        Update: {
+          allowed_branches?: string[] | null
+          careers_url?: string | null
+          created_at?: string
+          cs_subjects?: string[] | null
+          description?: string | null
+          dsa_topics?: string[] | null
+          hiring_season?: string | null
+          hq_location?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          min_cgpa?: number | null
+          name?: string
+          process_steps?: string[] | null
+          salary_max?: number | null
+          salary_min?: number | null
+          slug?: string
+          tech_stack?: string[] | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          branch: string | null
+          cgpa: number | null
+          college: string | null
+          created_at: string
+          dream_companies: string[] | null
+          email: string | null
+          full_name: string | null
+          graduation_year: number | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          branch?: string | null
+          cgpa?: number | null
+          college?: string | null
+          created_at?: string
+          dream_companies?: string[] | null
+          email?: string | null
+          full_name?: string | null
+          graduation_year?: number | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          branch?: string | null
+          cgpa?: number | null
+          college?: string | null
+          created_at?: string
+          dream_companies?: string[] | null
+          email?: string | null
+          full_name?: string | null
+          graduation_year?: number | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      resumes: {
+        Row: {
+          ats_score: number | null
+          created_at: string
+          file_path: string
+          id: string
+          is_primary: boolean
+          label: string
+          size_bytes: number | null
+          user_id: string
+        }
+        Insert: {
+          ats_score?: number | null
+          created_at?: string
+          file_path: string
+          id?: string
+          is_primary?: boolean
+          label: string
+          size_bytes?: number | null
+          user_id: string
+        }
+        Update: {
+          ats_score?: number | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          is_primary?: boolean
+          label?: string
+          size_bytes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
