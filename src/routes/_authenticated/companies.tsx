@@ -1,11 +1,25 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Search, MapPin, Briefcase } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Search, MapPin, Briefcase, Plus, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAndAddCompany } from "@/lib/ai.functions";
 
 export const Route = createFileRoute("/_authenticated/companies")({
   head: () => ({ meta: [{ title: "Companies — PlacementPilot" }] }),
@@ -14,6 +28,12 @@ export const Route = createFileRoute("/_authenticated/companies")({
 
 function CompaniesPage() {
   const [q, setQ] = useState("");
+  const [open, setOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [adding, setAdding] = useState(false);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const addCompany = useServerFn(fetchAndAddCompany);
 
   const companies = useQuery({
     queryKey: ["companies"],
@@ -29,11 +49,66 @@ function CompaniesPage() {
       .includes(q.toLowerCase()),
   );
 
+  async function onAdd() {
+    if (!newName.trim()) return;
+    setAdding(true);
+    try {
+      const c = await addCompany({ data: { name: newName.trim() } });
+      toast.success(`Added ${c.name}`);
+      qc.invalidateQueries({ queryKey: ["companies"] });
+      setOpen(false);
+      setNewName("");
+      navigate({ to: "/companies/$slug", params: { slug: c.slug } });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to add company");
+    } finally {
+      setAdding(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold tracking-tight">Companies</h1>
-        <p className="text-sm text-muted-foreground">Research recruiters, eligibility, and process.</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Companies</h1>
+          <p className="text-sm text-muted-foreground">Research recruiters, eligibility, and process.</p>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-1.5"><Plus className="h-4 w-4" /> Add company</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> Add company with AI
+              </DialogTitle>
+              <DialogDescription>
+                Type any company name. We'll fetch eligibility, tech stack, process, and typical package.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label>Company name</Label>
+              <Input
+                autoFocus
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    onAdd();
+                  }
+                }}
+                placeholder="e.g. Atlassian, Zerodha, Stripe"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)} disabled={adding}>Cancel</Button>
+              <Button onClick={onAdd} disabled={adding || !newName.trim()}>
+                {adding ? "Fetching…" : "Fetch & add"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="relative max-w-md">
