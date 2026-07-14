@@ -43,7 +43,7 @@ function CompanyDetailPage() {
   if (!q.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
 
   const c = q.data;
-  const elig = computeEligibility(c, profile.data);
+  const elig = computeEligibility(c, profile.data ?? null);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
