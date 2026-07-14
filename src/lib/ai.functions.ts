@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-3-flash-preview";
+const FIRECRAWL_GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
@@ -44,6 +45,45 @@ function extractJson(text: string): unknown {
   return JSON.parse(raw.slice(start, end + 1));
 }
 
+async function firecrawlSearch(query: string): Promise<string> {
+  const lovKey = process.env.LOVABLE_API_KEY;
+  const fcKey = process.env.FIRECRAWL_API_KEY;
+  if (!lovKey || !fcKey) return "";
+  try {
+    const res = await fetch(`${FIRECRAWL_GATEWAY}/search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${lovKey}`,
+        "X-Connection-Api-Key": fcKey,
+      },
+      body: JSON.stringify({
+        query,
+        limit: 5,
+        scrapeOptions: { formats: ["markdown"], onlyMainContent: true },
+      }),
+    });
+    if (!res.ok) {
+      console.error("Firecrawl search failed", res.status, await res.text().catch(() => ""));
+      return "";
+    }
+    const json = (await res.json()) as {
+      data?: Array<{ url?: string; title?: string; description?: string; markdown?: string }>;
+    };
+    const items = json.data ?? [];
+    return items
+      .map((r, i) => {
+        const body = (r.markdown ?? r.description ?? "").slice(0, 2500);
+        return `--- SOURCE ${i + 1}: ${r.title ?? ""} (${r.url ?? ""}) ---\n${body}`;
+      })
+      .join("\n\n")
+      .slice(0, 14000);
+  } catch (err) {
+    console.error("Firecrawl search error", err);
+    return "";
+  }
+}
+
 export const fetchAndAddCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => {
@@ -65,7 +105,18 @@ export const fetchAndAddCompany = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return existing;
 
-    const prompt = `You are a placement research assistant. Return ONLY a JSON object with real, best-known information about the company "${data.name}" for Indian campus placements. Use this exact shape (fields nullable if unknown):
+    // 1) Pull real web sources via Firecrawl
+    const [overview, placement] = await Promise.all([
+      firecrawlSearch(`${data.name} company official website careers headquarters industry`),
+      firecrawlSearch(`${data.name} India campus placement eligibility CGPA cutoff hiring process salary LPA branches`),
+    ]);
+    const sources = [overview, placement].filter(Boolean).join("\n\n");
+
+    if (!sources) {
+      throw new Error("Could not fetch live web data for this company. Try again shortly.");
+    }
+
+    const prompt = `You are a placement research analyst. Using ONLY the web sources provided below, extract accurate, verifiable information about "${data.name}" for Indian campus placements. Do NOT invent facts. If a field is not supported by the sources, set it to null. Return ONLY a JSON object with this shape:
 {
   "name": string,
   "industry": string,
@@ -73,21 +124,24 @@ export const fetchAndAddCompany = createServerFn({ method: "POST" })
   "website": string,
   "careers_url": string,
   "hq_location": string,
-  "min_cgpa": number (typical campus cutoff, e.g. 7.0),
+  "min_cgpa": number|null (typical campus cutoff, e.g. 7.0),
   "allowed_branches": string[] (e.g. ["CSE","IT","ECE"]),
   "tech_stack": string[],
-  "salary_min": number (LPA),
-  "salary_max": number (LPA),
+  "salary_min": number|null (LPA, integer),
+  "salary_max": number|null (LPA, integer),
   "hiring_season": string (e.g. "Autumn 2025"),
   "process_steps": string[] (ordered),
   "dsa_topics": string[],
   "cs_subjects": string[]
 }
-No prose, no markdown, JSON only.`;
+No prose, no markdown, JSON only.
+
+WEB SOURCES:
+${sources}`;
 
     const result = await callGateway({
       messages: [
-        { role: "system", content: "You output strict JSON only." },
+        { role: "system", content: "You output strict JSON only. Ground every field in the provided web sources; use null when unsupported." },
         { role: "user", content: prompt },
       ],
     });
