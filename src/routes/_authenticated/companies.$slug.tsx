@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, MapPin, GraduationCap, Briefcase } from "lucide-react";
+import { ArrowLeft, ExternalLink, MapPin, GraduationCap, Briefcase, CheckCircle2, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,16 +29,29 @@ function CompanyDetailPage() {
     },
   });
 
+  const profile = useQuery({
+    queryKey: ["profile-full"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data } = await supabase.from("profiles").select("*").eq("id", u.user.id).maybeSingle();
+      return data;
+    },
+  });
+
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!q.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
 
   const c = q.data;
+  const elig = computeEligibility(c, profile.data ?? null);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Link to="/companies" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> All companies
       </Link>
+
+      <EligibilityBanner result={elig} />
 
       <div className="bento-card">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
@@ -127,4 +140,100 @@ function BadgeList({ items }: { items: string[] }) {
 
 function Empty() {
   return <p className="text-sm text-muted-foreground">Not listed yet.</p>;
+}
+
+type Company = {
+  min_cgpa: number | null;
+  allowed_branches: string[] | null;
+  name: string;
+};
+type Profile = {
+  cgpa: number | null;
+  branch: string | null;
+} | null;
+
+type Eligibility = {
+  status: "eligible" | "ineligible" | "unknown" | "no-profile";
+  reasons: string[];
+  passes: string[];
+};
+
+function computeEligibility(c: Company, p: Profile): Eligibility {
+  if (!p) return { status: "no-profile", reasons: [], passes: [] };
+  if (p.cgpa == null && !p.branch) return { status: "no-profile", reasons: [], passes: [] };
+
+  const reasons: string[] = [];
+  const passes: string[] = [];
+
+  if (c.min_cgpa != null) {
+    if (p.cgpa == null) {
+      reasons.push("Add your CGPA to check the cutoff.");
+    } else if (p.cgpa < c.min_cgpa) {
+      reasons.push(`CGPA ${p.cgpa} is below the ${c.min_cgpa} cutoff.`);
+    } else {
+      passes.push(`CGPA ${p.cgpa} meets the ${c.min_cgpa} cutoff.`);
+    }
+  }
+
+  if (c.allowed_branches && c.allowed_branches.length > 0) {
+    if (!p.branch) {
+      reasons.push("Add your branch to check eligibility.");
+    } else {
+      const norm = (s: string) => s.toUpperCase().replace(/[^A-Z]/g, "");
+      const allowed = c.allowed_branches.map(norm);
+      if (allowed.includes(norm(p.branch))) {
+        passes.push(`Branch ${p.branch} is allowed.`);
+      } else {
+        reasons.push(`Branch ${p.branch} not in ${c.allowed_branches.join(", ")}.`);
+      }
+    }
+  }
+
+  if (reasons.length === 0 && passes.length === 0) return { status: "unknown", reasons, passes };
+  const blocking = reasons.some((r) => /below|not in/i.test(r));
+  return { status: blocking ? "ineligible" : "eligible", reasons, passes };
+}
+
+function EligibilityBanner({ result }: { result: Eligibility }) {
+  if (result.status === "no-profile") {
+    return (
+      <div className="flex items-start gap-3 rounded-xl border border-border bg-mist/40 p-4">
+        <AlertTriangle className="mt-0.5 h-5 w-5 text-muted-foreground" />
+        <div className="text-sm">
+          <p className="font-medium">Complete your profile to check eligibility</p>
+          <Link to="/profile" className="text-primary hover:underline">Go to profile →</Link>
+        </div>
+      </div>
+    );
+  }
+  if (result.status === "unknown") return null;
+  const good = result.status === "eligible";
+  return (
+    <div
+      className={`flex items-start gap-3 rounded-xl border p-4 ${
+        good
+          ? "border-emerald-500/30 bg-emerald-500/10"
+          : "border-destructive/30 bg-destructive/10"
+      }`}
+    >
+      {good ? (
+        <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-700" />
+      ) : (
+        <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
+      )}
+      <div className="text-sm">
+        <p className="font-medium">
+          {good ? "You're eligible based on the listed criteria" : "You may not be eligible"}
+        </p>
+        <ul className="mt-1 list-disc space-y-0.5 pl-4 text-muted-foreground">
+          {result.passes.map((p) => (
+            <li key={p}>{p}</li>
+          ))}
+          {result.reasons.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }

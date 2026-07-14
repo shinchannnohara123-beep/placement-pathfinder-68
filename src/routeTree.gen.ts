@@ -13,6 +13,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedResumeRouteImport } from './routes/_authenticated/resume'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedMentorRouteImport } from './routes/_authenticated/mentor'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
@@ -35,6 +37,16 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedResumeRoute = AuthenticatedResumeRouteImport.update({
   id: '/resume',
   path: '/resume',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMentorRoute = AuthenticatedMentorRouteImport.update({
+  id: '/mentor',
+  path: '/mentor',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -66,6 +78,8 @@ export interface FileRoutesByFullPath {
   '/applications': typeof AuthenticatedApplicationsRoute
   '/companies': typeof AuthenticatedCompaniesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mentor': typeof AuthenticatedMentorRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/resume': typeof AuthenticatedResumeRoute
   '/companies/$slug': typeof AuthenticatedCompaniesSlugRoute
 }
@@ -75,6 +89,8 @@ export interface FileRoutesByTo {
   '/applications': typeof AuthenticatedApplicationsRoute
   '/companies': typeof AuthenticatedCompaniesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/mentor': typeof AuthenticatedMentorRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/resume': typeof AuthenticatedResumeRoute
   '/companies/$slug': typeof AuthenticatedCompaniesSlugRoute
 }
@@ -86,6 +102,8 @@ export interface FileRoutesById {
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/mentor': typeof AuthenticatedMentorRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/resume': typeof AuthenticatedResumeRoute
   '/_authenticated/companies/$slug': typeof AuthenticatedCompaniesSlugRoute
 }
@@ -97,6 +115,8 @@ export interface FileRouteTypes {
     | '/applications'
     | '/companies'
     | '/dashboard'
+    | '/mentor'
+    | '/profile'
     | '/resume'
     | '/companies/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -106,6 +126,8 @@ export interface FileRouteTypes {
     | '/applications'
     | '/companies'
     | '/dashboard'
+    | '/mentor'
+    | '/profile'
     | '/resume'
     | '/companies/$slug'
   id:
@@ -116,6 +138,8 @@ export interface FileRouteTypes {
     | '/_authenticated/applications'
     | '/_authenticated/companies'
     | '/_authenticated/dashboard'
+    | '/_authenticated/mentor'
+    | '/_authenticated/profile'
     | '/_authenticated/resume'
     | '/_authenticated/companies/$slug'
   fileRoutesById: FileRoutesById
@@ -154,6 +178,20 @@ declare module '@tanstack/react-router' {
       path: '/resume'
       fullPath: '/resume'
       preLoaderRoute: typeof AuthenticatedResumeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mentor': {
+      id: '/_authenticated/mentor'
+      path: '/mentor'
+      fullPath: '/mentor'
+      preLoaderRoute: typeof AuthenticatedMentorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -205,6 +243,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedResumeRoute: typeof AuthenticatedResumeRoute
 }
 
@@ -212,6 +252,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMentorRoute: AuthenticatedMentorRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedResumeRoute: AuthenticatedResumeRoute,
 }
 
