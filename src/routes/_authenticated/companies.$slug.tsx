@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ExternalLink, MapPin, GraduationCap, Briefcase } from "lucide-react";
+import { ArrowLeft, ExternalLink, MapPin, GraduationCap, Briefcase, CheckCircle2, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,16 +29,29 @@ function CompanyDetailPage() {
     },
   });
 
+  const profile = useQuery({
+    queryKey: ["profile-full"],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return null;
+      const { data } = await supabase.from("profiles").select("*").eq("id", u.user.id).maybeSingle();
+      return data;
+    },
+  });
+
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Loading…</p>;
   if (!q.data) return <p className="text-sm text-muted-foreground">Not found.</p>;
 
   const c = q.data;
+  const elig = computeEligibility(c, profile.data);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Link to="/companies" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> All companies
       </Link>
+
+      <EligibilityBanner result={elig} />
 
       <div className="bento-card">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
