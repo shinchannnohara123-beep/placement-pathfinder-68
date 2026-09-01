@@ -196,8 +196,9 @@ export const fetchAndAddCompany = createServerFn({ method: "POST" })
     // 1) Official source first: company's own domain, then its careers page.
     const site = await findOfficialSite(data.name);
     if (!site) {
-      throw new Error(
-        `Could not confirm an official website for "${data.name}". Nothing was saved — we never store unverified company data.`,
+      throw new IngestError(
+        "no_official_source",
+        `No official website could be verified for "${data.name}". Only company-owned domains are accepted, so nothing was saved.`,
       );
     }
     const careersUrl = await findCareersUrl(site);
@@ -206,10 +207,12 @@ export const fetchAndAddCompany = createServerFn({ method: "POST" })
     ).filter(Boolean) as { url: string; markdown: string }[];
 
     if (pages.length === 0) {
-      throw new Error(
-        `The official site for "${data.name}" could not be read right now. Nothing was saved — we never store unverified company data.`,
+      throw new IngestError(
+        "source_unreadable",
+        `The official source ${site} could not be read (blocked or empty page). Nothing was saved — unverified data is never stored.`,
       );
     }
+
 
     const sources = pages
       .map((p, i) => `--- OFFICIAL SOURCE ${i + 1}: ${p.url} ---\n${p.markdown}`)
