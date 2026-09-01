@@ -47,12 +47,31 @@ function extractJson(text: string): unknown {
 
 type FcResult = { url?: string; title?: string; description?: string; markdown?: string };
 
+/** Thrown so the UI can show exactly which stage of ingestion failed. */
+export class IngestError extends Error {
+  stage: string;
+  constructor(stage: string, message: string) {
+    super(message);
+    this.stage = stage;
+    this.name = "IngestError";
+  }
+}
+
 async function firecrawlCall(path: string, body: Record<string, unknown>) {
   const lovKey = process.env.LOVABLE_API_KEY;
   const fcKey = process.env.FIRECRAWL_API_KEY;
-  if (!lovKey || !fcKey) return null;
+  if (!lovKey) {
+    throw new IngestError("auth", "Lovable AI key is missing on the server, so web verification cannot run.");
+  }
+  if (!fcKey) {
+    throw new IngestError(
+      "connection",
+      "The Firecrawl web-research connection is not linked to this project, so no official source can be fetched. Link Firecrawl in Connectors and try again.",
+    );
+  }
+  let res: Response;
   try {
-    const res = await fetch(`${FIRECRAWL_GATEWAY}${path}`, {
+    res = await fetch(`${FIRECRAWL_GATEWAY}${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -61,16 +80,31 @@ async function firecrawlCall(path: string, body: Record<string, unknown>) {
       },
       body: JSON.stringify(body),
     });
-    if (!res.ok) {
-      console.error(`Firecrawl ${path} failed`, res.status, await res.text().catch(() => ""));
-      return null;
-    }
-    return (await res.json()) as Record<string, unknown>;
   } catch (err) {
-    console.error(`Firecrawl ${path} error`, err);
-    return null;
+    throw new IngestError(
+      "network",
+      `Could not reach the web-research service (${path}): ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
+  if (!res.ok) {
+    const text = (await res.text().catch(() => "")).slice(0, 300);
+    if (res.status === 401 || res.status === 403) {
+      throw new IngestError(
+        "auth",
+        `Firecrawl authentication failed (${res.status}) on ${path}. The connection key is invalid, unlinked, or out of credits. Details: ${text}`,
+      );
+    }
+    if (res.status === 402) {
+      throw new IngestError("credits", `Firecrawl credits are exhausted (402). Details: ${text}`);
+    }
+    if (res.status === 429) {
+      throw new IngestError("rate_limit", `Firecrawl rate limit reached (429). Try again shortly.`);
+    }
+    throw new IngestError("firecrawl", `Firecrawl request ${path} failed (${res.status}). Details: ${text}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
 }
+
 
 const BLOCKED_HOSTS = [
   "wikipedia.org", "glassdoor", "ambitionbox", "indeed", "naukri", "quora", "reddit",
@@ -107,11 +141,13 @@ async function findOfficialSite(name: string): Promise<string | null> {
 }
 
 async function scrapePage(url: string): Promise<{ url: string; markdown: string } | null> {
-  const json = await firecrawlCall("/scrape", {
-    url,
-    formats: ["markdown"],
-    onlyMainContent: true,
-  });
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = await firecrawlCall("/scrape", { url, formats: ["markdown"], onlyMainContent: true });
+  } catch (err) {
+    if (err instanceof IngestError && ["auth", "credits", "connection"].includes(err.stage)) throw err;
+    return null;
+  }
   if (!json) return null;
   const data = (json.data as Record<string, unknown> | undefined) ?? json;
   const markdown = typeof data.markdown === "string" ? data.markdown : "";
@@ -121,7 +157,12 @@ async function scrapePage(url: string): Promise<{ url: string; markdown: string 
 
 /** Discovers the official careers page on the company's own domain. */
 async function findCareersUrl(site: string): Promise<string | null> {
-  const json = await firecrawlCall("/map", { url: site, search: "careers", limit: 40 });
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = await firecrawlCall("/map", { url: site, search: "careers", limit: 40 });
+  } catch {
+    return null; // careers page is optional; the official site alone is enough
+  }
   const links = (json?.links as unknown[] | undefined) ?? [];
   const urls = links
     .map((l) => (typeof l === "string" ? l : ((l as { url?: string })?.url ?? "")))
@@ -155,8 +196,9 @@ export const fetchAndAddCompany = createServerFn({ method: "POST" })
     // 1) Official source first: company's own domain, then its careers page.
     const site = await findOfficialSite(data.name);
     if (!site) {
-      throw new Error(
-        `Could not confirm an official website for "${data.name}". Nothing was saved — we never store unverified company data.`,
+      throw new IngestError(
+        "no_official_source",
+        `No official website could be verified for "${data.name}". Only company-owned domains are accepted, so nothing was saved.`,
       );
     }
     const careersUrl = await findCareersUrl(site);
@@ -165,10 +207,12 @@ export const fetchAndAddCompany = createServerFn({ method: "POST" })
     ).filter(Boolean) as { url: string; markdown: string }[];
 
     if (pages.length === 0) {
-      throw new Error(
-        `The official site for "${data.name}" could not be read right now. Nothing was saved — we never store unverified company data.`,
+      throw new IngestError(
+        "source_unreadable",
+        `The official source ${site} could not be read (blocked or empty page). Nothing was saved — unverified data is never stored.`,
       );
     }
+
 
     const sources = pages
       .map((p, i) => `--- OFFICIAL SOURCE ${i + 1}: ${p.url} ---\n${p.markdown}`)

@@ -34,6 +34,7 @@ function CompaniesPage() {
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const addCompany = useServerFn(fetchAndAddCompany);
@@ -55,6 +56,7 @@ function CompaniesPage() {
   async function onAdd() {
     if (!newName.trim()) return;
     setAdding(true);
+    setAddError(null);
     try {
       const c = await addCompany({ data: { name: newName.trim() } });
       toast.success(`Added ${c.name}`);
@@ -63,11 +65,14 @@ function CompaniesPage() {
       setNewName("");
       navigate({ to: "/companies/$slug", params: { slug: c.slug } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to add company");
+      const msg = e instanceof Error ? e.message : String(e);
+      setAddError(msg || "Ingestion failed for an unknown reason.");
+      toast.error("Could not add company");
     } finally {
       setAdding(false);
     }
   }
+
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -104,6 +109,15 @@ function CompaniesPage() {
                 placeholder="e.g. Atlassian, Zerodha, Stripe"
               />
             </div>
+            {addError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                <p className="font-medium text-destructive">Ingestion failed</p>
+                <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{addError}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Nothing was saved. We only store facts found on a company's own official pages.
+                </p>
+              </div>
+            )}
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)} disabled={adding}>Cancel</Button>
               <Button onClick={onAdd} disabled={adding || !newName.trim()}>
