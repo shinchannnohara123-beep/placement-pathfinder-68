@@ -55,6 +55,7 @@ function CompaniesPage() {
   async function onAdd() {
     if (!newName.trim()) return;
     setAdding(true);
+    setAddError(null);
     try {
       const c = await addCompany({ data: { name: newName.trim() } });
       toast.success(`Added ${c.name}`);
@@ -63,11 +64,14 @@ function CompaniesPage() {
       setNewName("");
       navigate({ to: "/companies/$slug", params: { slug: c.slug } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to add company");
+      const msg = e instanceof Error ? e.message : String(e);
+      setAddError(msg || "Ingestion failed for an unknown reason.");
+      toast.error("Could not add company");
     } finally {
       setAdding(false);
     }
   }
+
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
