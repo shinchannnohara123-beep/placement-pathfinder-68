@@ -34,6 +34,7 @@ function CompaniesPage() {
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
   const qc = useQueryClient();
   const navigate = useNavigate();
   const addCompany = useServerFn(fetchAndAddCompany);
