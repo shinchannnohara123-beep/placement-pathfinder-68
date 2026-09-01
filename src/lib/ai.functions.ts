@@ -141,11 +141,13 @@ async function findOfficialSite(name: string): Promise<string | null> {
 }
 
 async function scrapePage(url: string): Promise<{ url: string; markdown: string } | null> {
-  const json = await firecrawlCall("/scrape", {
-    url,
-    formats: ["markdown"],
-    onlyMainContent: true,
-  });
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = await firecrawlCall("/scrape", { url, formats: ["markdown"], onlyMainContent: true });
+  } catch (err) {
+    if (err instanceof IngestError && ["auth", "credits", "connection"].includes(err.stage)) throw err;
+    return null;
+  }
   if (!json) return null;
   const data = (json.data as Record<string, unknown> | undefined) ?? json;
   const markdown = typeof data.markdown === "string" ? data.markdown : "";
@@ -155,7 +157,12 @@ async function scrapePage(url: string): Promise<{ url: string; markdown: string 
 
 /** Discovers the official careers page on the company's own domain. */
 async function findCareersUrl(site: string): Promise<string | null> {
-  const json = await firecrawlCall("/map", { url: site, search: "careers", limit: 40 });
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = await firecrawlCall("/map", { url: site, search: "careers", limit: 40 });
+  } catch {
+    return null; // careers page is optional; the official site alone is enough
+  }
   const links = (json?.links as unknown[] | undefined) ?? [];
   const urls = links
     .map((l) => (typeof l === "string" ? l : ((l as { url?: string })?.url ?? "")))
