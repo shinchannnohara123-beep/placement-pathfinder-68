@@ -141,12 +141,47 @@ function DashboardPage() {
         <div className="bento-card md:col-span-2">
           <h3 className="font-display text-lg font-semibold">Quick actions</h3>
           <div className="mt-3 space-y-2">
+            <Link to="/career"><Button variant="outline" className="w-full justify-start gap-2"><Map className="h-4 w-4" /> Career Roadmap</Button></Link>
+            <Link to="/resume"><Button variant="outline" className="w-full justify-start gap-2"><FileText className="h-4 w-4" /> Resume Studio</Button></Link>
+            <Link to="/analytics"><Button variant="outline" className="w-full justify-start gap-2"><BarChart3 className="h-4 w-4" /> Analytics</Button></Link>
             <Link to="/companies"><Button variant="outline" className="w-full justify-start gap-2"><Building2 className="h-4 w-4" /> Explore companies</Button></Link>
             <Link to="/applications"><Button variant="outline" className="w-full justify-start gap-2"><Briefcase className="h-4 w-4" /> Add application</Button></Link>
-            <Link to="/resume"><Button variant="outline" className="w-full justify-start gap-2"><FileText className="h-4 w-4" /> Upload resume</Button></Link>
           </div>
           <div className="mt-4 rounded-lg bg-mist p-3 text-xs text-muted-foreground">
             {companies.data ?? 0} companies in the directory · updated weekly.
+          </div>
+        </div>
+
+        <div className="bento-card md:col-span-3">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 font-display text-lg font-semibold"><Map className="h-4 w-4 text-primary" /> Career roadmap</h3>
+            <Link to="/career" className="text-sm text-primary hover:underline">Open</Link>
+          </div>
+          <div className="flex items-center gap-4">
+            <ProgressRing value={roadmapPct} label="roadmap" />
+            <div className="min-w-0 text-sm">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Next milestone</div>
+              <p className="font-medium">{nextStage ? nextStage.nextAction : "All stages complete"}</p>
+              {nextStage ? <p className="text-xs text-muted-foreground">Stage: {nextStage.title}</p> : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="bento-card md:col-span-3">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 font-display text-lg font-semibold"><FileText className="h-4 w-4 text-primary" /> Resume completion</h3>
+            <Link to="/resume" className="text-sm text-primary hover:underline">Resume Studio</Link>
+          </div>
+          <div className="flex items-center gap-4">
+            <ProgressRing value={resumePct} label="resume" />
+            <div className="text-sm text-muted-foreground">
+              {resumeChecks.filter((c) => c.done).length}/{resumeChecks.length} sections ready
+              {resumeChecks.some((c) => !c.done) ? (
+                <p className="mt-1 text-xs">
+                  Missing: {resumeChecks.filter((c) => !c.done).map((c) => c.label).join(", ")}
+                </p>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
