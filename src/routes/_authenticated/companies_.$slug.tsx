@@ -9,7 +9,7 @@ import { SourceBadge } from "@/components/source-badge";
 
 const UNVERIFIED = "Information unavailable or not verified.";
 
-export const Route = createFileRoute("/_authenticated/companies/$slug")({
+export const Route = createFileRoute("/_authenticated/companies_/$slug")({
   head: ({ loaderData }) => ({
     meta: [{ title: `${(loaderData as { name?: string } | undefined)?.name ?? "Company"} — PlacementPilot` }],
   }),

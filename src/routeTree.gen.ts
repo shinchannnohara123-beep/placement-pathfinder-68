@@ -20,7 +20,7 @@ import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCareerRouteImport } from './routes/_authenticated/career'
 import { Route as AuthenticatedApplicationsRouteImport } from './routes/_authenticated/applications'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
-import { Route as AuthenticatedCompaniesSlugRouteImport } from './routes/_authenticated/companies.$slug'
+import { Route as AuthenticatedCompaniesSlugRouteImport } from './routes/_authenticated/companies_.$slug'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -79,9 +79,9 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
 } as any)
 const AuthenticatedCompaniesSlugRoute =
   AuthenticatedCompaniesSlugRouteImport.update({
-    id: '/$slug',
-    path: '/$slug',
-    getParentRoute: () => AuthenticatedCompaniesRoute,
+    id: '/companies_/$slug',
+    path: '/companies/$slug',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -90,7 +90,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/career': typeof AuthenticatedCareerRoute
-  '/companies': typeof AuthenticatedCompaniesRouteWithChildren
+  '/companies': typeof AuthenticatedCompaniesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -103,7 +103,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/applications': typeof AuthenticatedApplicationsRoute
   '/career': typeof AuthenticatedCareerRoute
-  '/companies': typeof AuthenticatedCompaniesRouteWithChildren
+  '/companies': typeof AuthenticatedCompaniesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/mentor': typeof AuthenticatedMentorRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -118,12 +118,12 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/applications': typeof AuthenticatedApplicationsRoute
   '/_authenticated/career': typeof AuthenticatedCareerRoute
-  '/_authenticated/companies': typeof AuthenticatedCompaniesRouteWithChildren
+  '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/mentor': typeof AuthenticatedMentorRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/resume': typeof AuthenticatedResumeRoute
-  '/_authenticated/companies/$slug': typeof AuthenticatedCompaniesSlugRoute
+  '/_authenticated/companies_/$slug': typeof AuthenticatedCompaniesSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -165,7 +165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mentor'
     | '/_authenticated/profile'
     | '/_authenticated/resume'
-    | '/_authenticated/companies/$slug'
+    | '/_authenticated/companies_/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -253,50 +253,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/companies/$slug': {
-      id: '/_authenticated/companies/$slug'
-      path: '/$slug'
+    '/_authenticated/companies_/$slug': {
+      id: '/_authenticated/companies_/$slug'
+      path: '/companies/$slug'
       fullPath: '/companies/$slug'
       preLoaderRoute: typeof AuthenticatedCompaniesSlugRouteImport
-      parentRoute: typeof AuthenticatedCompaniesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
-
-interface AuthenticatedCompaniesRouteChildren {
-  AuthenticatedCompaniesSlugRoute: typeof AuthenticatedCompaniesSlugRoute
-}
-
-const AuthenticatedCompaniesRouteChildren: AuthenticatedCompaniesRouteChildren =
-  {
-    AuthenticatedCompaniesSlugRoute: AuthenticatedCompaniesSlugRoute,
-  }
-
-const AuthenticatedCompaniesRouteWithChildren =
-  AuthenticatedCompaniesRoute._addFileChildren(
-    AuthenticatedCompaniesRouteChildren,
-  )
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedApplicationsRoute: typeof AuthenticatedApplicationsRoute
   AuthenticatedCareerRoute: typeof AuthenticatedCareerRoute
-  AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRouteWithChildren
+  AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMentorRoute: typeof AuthenticatedMentorRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedResumeRoute: typeof AuthenticatedResumeRoute
+  AuthenticatedCompaniesSlugRoute: typeof AuthenticatedCompaniesSlugRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedApplicationsRoute: AuthenticatedApplicationsRoute,
   AuthenticatedCareerRoute: AuthenticatedCareerRoute,
-  AuthenticatedCompaniesRoute: AuthenticatedCompaniesRouteWithChildren,
+  AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMentorRoute: AuthenticatedMentorRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedResumeRoute: AuthenticatedResumeRoute,
+  AuthenticatedCompaniesSlugRoute: AuthenticatedCompaniesSlugRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
