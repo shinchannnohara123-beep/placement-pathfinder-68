@@ -45,6 +45,91 @@ function extractJson(text: string): unknown {
   return JSON.parse(raw.slice(start, end + 1));
 }
 
+type FcResult = { url?: string; title?: string; description?: string; markdown?: string };
+
+async function firecrawlCall(path: string, body: Record<string, unknown>) {
+  const lovKey = process.env.LOVABLE_API_KEY;
+  const fcKey = process.env.FIRECRAWL_API_KEY;
+  if (!lovKey || !fcKey) return null;
+  try {
+    const res = await fetch(`${FIRECRAWL_GATEWAY}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${lovKey}`,
+        "X-Connection-Api-Key": fcKey,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      console.error(`Firecrawl ${path} failed`, res.status, await res.text().catch(() => ""));
+      return null;
+    }
+    return (await res.json()) as Record<string, unknown>;
+  } catch (err) {
+    console.error(`Firecrawl ${path} error`, err);
+    return null;
+  }
+}
+
+const BLOCKED_HOSTS = [
+  "wikipedia.org", "glassdoor", "ambitionbox", "indeed", "naukri", "quora", "reddit",
+  "medium.com", "blogspot", "wordpress", "youtube", "facebook", "instagram", "twitter",
+  "x.com", "geeksforgeeks", "prepinsta", "freshersworld", "shiksha", "collegedunia",
+];
+
+function hostOf(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+function isOfficialHost(url: string, company: string) {
+  const host = hostOf(url);
+  if (!host) return false;
+  if (BLOCKED_HOSTS.some((b) => host.includes(b))) return false;
+  const token = company.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!token) return false;
+  const base = host.split(".")[0].replace(/[^a-z0-9]/g, "");
+  return host.replace(/[^a-z0-9]/g, "").includes(token) || token.includes(base);
+}
+
+/** Finds the company's own domain, preferring results on an official-looking host. */
+async function findOfficialSite(name: string): Promise<string | null> {
+  const json = await firecrawlCall("/search", { query: `${name} official website`, limit: 8 });
+  const items = ((json?.data as FcResult[] | undefined) ?? []).filter((r) => r.url);
+  const official = items.find((r) => isOfficialHost(r.url!, name));
+  if (!official?.url) return null;
+  const host = hostOf(official.url);
+  return host ? `https://${host}` : null;
+}
+
+async function scrapePage(url: string): Promise<{ url: string; markdown: string } | null> {
+  const json = await firecrawlCall("/scrape", {
+    url,
+    formats: ["markdown"],
+    onlyMainContent: true,
+  });
+  if (!json) return null;
+  const data = (json.data as Record<string, unknown> | undefined) ?? json;
+  const markdown = typeof data.markdown === "string" ? data.markdown : "";
+  if (!markdown.trim()) return null;
+  return { url, markdown: markdown.slice(0, 12000) };
+}
+
+/** Discovers the official careers page on the company's own domain. */
+async function findCareersUrl(site: string): Promise<string | null> {
+  const json = await firecrawlCall("/map", { url: site, search: "careers", limit: 40 });
+  const links = (json?.links as unknown[] | undefined) ?? [];
+  const urls = links
+    .map((l) => (typeof l === "string" ? l : ((l as { url?: string })?.url ?? "")))
+    .filter((u) => typeof u === "string" && u);
+  const preferred = urls.find((u) => /\/(careers|jobs|students|campus|university)/i.test(u));
+  return preferred ?? urls[0] ?? null;
+}
+
 async function firecrawlSearch(query: string): Promise<string> {
   const lovKey = process.env.LOVABLE_API_KEY;
   const fcKey = process.env.FIRECRAWL_API_KEY;
