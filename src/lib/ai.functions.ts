@@ -133,12 +133,17 @@ function isOfficialHost(url: string, company: string) {
 /** Finds the company's own domain, preferring results on an official-looking host. */
 async function findOfficialSite(name: string): Promise<string | null> {
   const json = await firecrawlCall("/search", { query: `${name} official website`, limit: 8 });
-  const items = ((json?.data as FcResult[] | undefined) ?? []).filter((r) => r.url);
+  // Firecrawl v2 returns { data: { web: [...] } }; older shape was { data: [...] }.
+  const raw = json?.data as unknown;
+  const items = (
+    Array.isArray(raw) ? (raw as FcResult[]) : (((raw as { web?: FcResult[] } | undefined)?.web) ?? [])
+  ).filter((r) => r?.url);
   const official = items.find((r) => isOfficialHost(r.url!, name));
   if (!official?.url) return null;
   const host = hostOf(official.url);
   return host ? `https://${host}` : null;
 }
+
 
 async function scrapePage(url: string): Promise<{ url: string; markdown: string } | null> {
   let json: Record<string, unknown> | null = null;
