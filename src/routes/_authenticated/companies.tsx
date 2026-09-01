@@ -20,6 +20,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAndAddCompany } from "@/lib/ai.functions";
+import { SourceBadge } from "@/components/source-badge";
+
+const UNVERIFIED = "Information unavailable or not verified.";
 
 export const Route = createFileRoute("/_authenticated/companies")({
   head: () => ({ meta: [{ title: "Companies — PlacementPilot" }] }),
@@ -83,7 +86,7 @@ function CompaniesPage() {
                 <Sparkles className="h-4 w-4 text-primary" /> Add company with AI
               </DialogTitle>
               <DialogDescription>
-                Type any company name. We'll fetch eligibility, tech stack, process, and typical package.
+                Type any company name. We read the company's official website and careers page only. Anything not stated there is left blank, never guessed.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
