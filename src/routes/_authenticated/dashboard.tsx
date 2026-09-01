@@ -74,6 +74,11 @@ function DashboardPage() {
     profile.data?.user?.email?.split("@")[0] ??
     "there";
 
+  const { stages } = usePlacementData();
+  const roadmapPct = roadmapOverall(stages);
+  const nextStage = stages.find((s) => s.status !== "completed");
+  const { checks: resumeChecks, percent: resumePct } = resumeCompleteness(profile.data?.profile ?? null, null);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:justify-between">
