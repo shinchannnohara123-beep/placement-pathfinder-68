@@ -4,6 +4,14 @@ import { Badge } from "@/components/ui/badge";
 
 export type VerificationStatus = "verified" | "unverified" | "unavailable" | string | null;
 
+function hostOf(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 export function SourceBadge({
   sourceName,
   sourceUrl,
@@ -37,18 +45,14 @@ export function SourceBadge({
           rel="noreferrer noopener"
           className="inline-flex items-center gap-1 text-primary hover:underline"
         >
-          {sourceName || new URL0(sourceUrl)} <ExternalLink className="h-3 w-3" />
+          {sourceName || hostOf(sourceUrl)} <ExternalLink className="h-3 w-3" />
         </a>
       ) : sourceName ? (
         <span>{sourceName}</span>
       ) : (
         <span>No source recorded</span>
       )}
-      {lastVerifiedAt ? (
-        <span>· checked {new Date(lastVerifiedAt).toLocaleDateString()}</span>
-      ) : null}
+      {lastVerifiedAt ? <span>· checked {new Date(lastVerifiedAt).toLocaleDateString()}</span> : null}
     </div>
   );
 }
-
-function new URL0() {}
