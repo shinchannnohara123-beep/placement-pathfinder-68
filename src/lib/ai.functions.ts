@@ -130,44 +130,6 @@ async function findCareersUrl(site: string): Promise<string | null> {
   return preferred ?? urls[0] ?? null;
 }
 
-async function firecrawlSearch(query: string): Promise<string> {
-  const lovKey = process.env.LOVABLE_API_KEY;
-  const fcKey = process.env.FIRECRAWL_API_KEY;
-  if (!lovKey || !fcKey) return "";
-  try {
-    const res = await fetch(`${FIRECRAWL_GATEWAY}/search`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovKey}`,
-        "X-Connection-Api-Key": fcKey,
-      },
-      body: JSON.stringify({
-        query,
-        limit: 5,
-        scrapeOptions: { formats: ["markdown"], onlyMainContent: true },
-      }),
-    });
-    if (!res.ok) {
-      console.error("Firecrawl search failed", res.status, await res.text().catch(() => ""));
-      return "";
-    }
-    const json = (await res.json()) as {
-      data?: Array<{ url?: string; title?: string; description?: string; markdown?: string }>;
-    };
-    const items = json.data ?? [];
-    return items
-      .map((r, i) => {
-        const body = (r.markdown ?? r.description ?? "").slice(0, 2500);
-        return `--- SOURCE ${i + 1}: ${r.title ?? ""} (${r.url ?? ""}) ---\n${body}`;
-      })
-      .join("\n\n")
-      .slice(0, 14000);
-  } catch (err) {
-    console.error("Firecrawl search error", err);
-    return "";
-  }
-}
 
 export const fetchAndAddCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
