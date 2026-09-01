@@ -18,7 +18,9 @@ const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Companies", url: "/companies", icon: Building2 },
   { title: "Applications", url: "/applications", icon: Briefcase },
-  { title: "Resume", url: "/resume", icon: FileText },
+  { title: "Career Roadmap", url: "/career", icon: Map },
+  { title: "Resume Studio", url: "/resume", icon: FileText },
+  { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "AI Mentor", url: "/mentor", icon: Sparkles },
   { title: "Profile", url: "/profile", icon: User },
 ];
