@@ -81,6 +81,7 @@ export type Database = {
           cs_subjects: string[] | null
           description: string | null
           dsa_topics: string[] | null
+          field_sources: Json
           hiring_season: string | null
           hq_location: string | null
           id: string
@@ -106,6 +107,7 @@ export type Database = {
           cs_subjects?: string[] | null
           description?: string | null
           dsa_topics?: string[] | null
+          field_sources?: Json
           hiring_season?: string | null
           hq_location?: string | null
           id?: string
@@ -131,6 +133,7 @@ export type Database = {
           cs_subjects?: string[] | null
           description?: string | null
           dsa_topics?: string[] | null
+          field_sources?: Json
           hiring_season?: string | null
           hq_location?: string | null
           id?: string

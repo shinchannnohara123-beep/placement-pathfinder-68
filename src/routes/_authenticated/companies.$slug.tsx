@@ -5,6 +5,9 @@ import { ArrowLeft, ExternalLink, MapPin, GraduationCap, Briefcase, CheckCircle2
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { SourceBadge } from "@/components/source-badge";
+
+const UNVERIFIED = "Information unavailable or not verified.";
 
 export const Route = createFileRoute("/_authenticated/companies/$slug")({
   head: ({ loaderData }) => ({
@@ -57,21 +60,44 @@ function CompanyDetailPage() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
           <div className="min-w-0">
             <h1 className="truncate font-display text-3xl font-bold tracking-tight">{c.name}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{c.industry}</p>
-            <p className="mt-4 text-sm leading-relaxed">{c.description}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{c.industry ?? UNVERIFIED}</p>
+            <p className="mt-4 text-sm leading-relaxed">{c.description ?? UNVERIFIED}</p>
+            <div className="mt-4">
+              <SourceBadge
+                sourceName={c.source_name}
+                sourceUrl={c.source_url}
+                lastVerifiedAt={c.last_verified_at}
+                status={c.verification_status}
+              />
+            </div>
           </div>
-          {c.careers_url && (
-            <a href={c.careers_url} target="_blank" rel="noreferrer">
-              <Button variant="outline" className="gap-2">Careers <ExternalLink className="h-3.5 w-3.5" /></Button>
-            </a>
-          )}
+          <div className="flex flex-col gap-2">
+            {c.source_url || c.website ? (
+              <a href={(c.source_url ?? c.website) as string} target="_blank" rel="noreferrer noopener">
+                <Button className="w-full gap-2">
+                  View official source <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              </a>
+            ) : null}
+            {c.careers_url && (
+              <a href={c.careers_url} target="_blank" rel="noreferrer noopener">
+                <Button variant="outline" className="w-full gap-2">
+                  Careers page <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              </a>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat label="Min CGPA" value={c.min_cgpa ?? "—"} icon={GraduationCap} />
-          <Stat label="HQ" value={c.hq_location ?? "—"} icon={MapPin} />
-          <Stat label="Package (LPA)" value={c.salary_min && c.salary_max ? `${c.salary_min}–${c.salary_max}` : "—"} icon={Briefcase} />
-          <Stat label="Season" value={c.hiring_season ?? "—"} icon={Briefcase} />
+          <Stat label="Min CGPA" value={c.min_cgpa ?? UNVERIFIED} icon={GraduationCap} />
+          <Stat label="HQ" value={c.hq_location ?? UNVERIFIED} icon={MapPin} />
+          <Stat
+            label="Package (LPA)"
+            value={c.salary_min && c.salary_max ? `${c.salary_min}–${c.salary_max}` : UNVERIFIED}
+            icon={Briefcase}
+          />
+          <Stat label="Season" value={c.hiring_season ?? UNVERIFIED} icon={Briefcase} />
         </div>
       </div>
 
@@ -88,6 +114,7 @@ function CompanyDetailPage() {
             </ol>
           ) : <Empty />}
         </Section>
+
 
         <Section title="Allowed branches">
           <BadgeList items={c.allowed_branches ?? []} />
@@ -113,7 +140,7 @@ function Stat({ label, value, icon: Icon }: { label: string; value: React.ReactN
   return (
     <div className="rounded-lg border border-border bg-mist/40 p-3">
       <div className="flex items-center gap-1 text-xs text-muted-foreground"><Icon className="h-3 w-3" /> {label}</div>
-      <div className="mt-1 font-display text-lg font-semibold">{value}</div>
+      <div className={`mt-1 font-display font-semibold ${value === UNVERIFIED ? "text-xs text-muted-foreground" : "text-lg"}`}>{value}</div>
     </div>
   );
 }
@@ -139,7 +166,7 @@ function BadgeList({ items }: { items: string[] }) {
 }
 
 function Empty() {
-  return <p className="text-sm text-muted-foreground">Not listed yet.</p>;
+  return <p className="text-sm text-muted-foreground">{UNVERIFIED}</p>;
 }
 
 type Company = {

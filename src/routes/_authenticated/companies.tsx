@@ -20,6 +20,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAndAddCompany } from "@/lib/ai.functions";
+import { SourceBadge } from "@/components/source-badge";
+
+const UNVERIFIED = "Information unavailable or not verified.";
 
 export const Route = createFileRoute("/_authenticated/companies")({
   head: () => ({ meta: [{ title: "Companies — PlacementPilot" }] }),
@@ -83,7 +86,7 @@ function CompaniesPage() {
                 <Sparkles className="h-4 w-4 text-primary" /> Add company with AI
               </DialogTitle>
               <DialogDescription>
-                Type any company name. We'll fetch eligibility, tech stack, process, and typical package.
+                Type any company name. We read the company's official website and careers page only. Anything not stated there is left blank, never guessed.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-2">
@@ -130,11 +133,19 @@ function CompaniesPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="truncate font-display text-lg font-semibold">{c.name}</h3>
-                  <p className="truncate text-xs text-muted-foreground">{c.industry}</p>
+                  <p className="truncate text-xs text-muted-foreground">{c.industry ?? UNVERIFIED}</p>
                 </div>
                 {c.min_cgpa ? (
                   <Badge variant="secondary" className="shrink-0">CGPA ≥ {c.min_cgpa}</Badge>
                 ) : null}
+              </div>
+              <div className="mt-3">
+                <SourceBadge
+                  sourceName={c.source_name}
+                  sourceUrl={c.source_url}
+                  lastVerifiedAt={c.last_verified_at}
+                  status={c.verification_status}
+                />
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {(c.tech_stack ?? []).slice(0, 3).map((t: string) => (
@@ -142,17 +153,26 @@ function CompaniesPage() {
                 ))}
               </div>
               <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {c.hq_location ?? "—"}</span>
+                <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {c.hq_location ?? "Location not verified"}</span>
                 <span className="inline-flex items-center gap-1 text-primary">
                   <Briefcase className="h-3 w-3" />
-                  {c.salary_min && c.salary_max ? `${c.salary_min}–${c.salary_max} LPA` : "—"}
+                  {c.salary_min && c.salary_max ? `${c.salary_min}–${c.salary_max} LPA` : "Package not verified"}
                 </span>
               </div>
             </Link>
           ))}
           {list.length === 0 && (
-            <p className="col-span-full text-sm text-muted-foreground">No companies match "{q}".</p>
+            <div className="col-span-full rounded-xl border border-dashed border-border p-8 text-center">
+              <p className="font-display text-base font-semibold">
+                {q ? `No companies match "${q}".` : "No verified companies yet"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add a company by name — we only save details we can read from its official website and careers page.
+                Anything we can't verify stays blank instead of being guessed.
+              </p>
+            </div>
           )}
+
         </div>
       )}
     </div>

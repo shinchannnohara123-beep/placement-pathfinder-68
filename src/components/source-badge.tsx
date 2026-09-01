@@ -23,15 +23,23 @@ export function SourceBadge({
   lastVerifiedAt?: string | null;
   status?: VerificationStatus;
 }) {
-  const s = status ?? "unverified";
+  const s = status ?? "needs_verification";
   const tone =
     s === "verified"
       ? "bg-emerald-500/10 text-emerald-700"
-      : s === "unavailable"
+      : s === "unavailable" || s === "expired"
         ? "bg-destructive/10 text-destructive"
         : "bg-mist text-ink";
-  const Icon = s === "verified" ? ShieldCheck : s === "unavailable" ? ShieldAlert : ShieldQuestion;
-  const label = s === "verified" ? "Verified" : s === "unavailable" ? "Source unavailable" : "Unverified";
+  const Icon = s === "verified" ? ShieldCheck : s === "unavailable" || s === "expired" ? ShieldAlert : ShieldQuestion;
+  const label =
+    s === "verified"
+      ? "Verified"
+      : s === "unavailable"
+        ? "Unavailable"
+        : s === "expired"
+          ? "Expired"
+          : "Needs verification";
+
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
