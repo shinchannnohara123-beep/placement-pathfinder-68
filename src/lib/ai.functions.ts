@@ -190,67 +190,101 @@ export const fetchAndAddCompany = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return existing;
 
-    // 1) Pull real web sources via Firecrawl
-    const [overview, placement] = await Promise.all([
-      firecrawlSearch(`${data.name} company official website careers headquarters industry`),
-      firecrawlSearch(`${data.name} India campus placement eligibility CGPA cutoff hiring process salary LPA branches`),
-    ]);
-    const sources = [overview, placement].filter(Boolean).join("\n\n");
+    // 1) Official source first: company's own domain, then its careers page.
+    const site = await findOfficialSite(data.name);
+    if (!site) {
+      throw new Error(
+        `Could not confirm an official website for "${data.name}". Nothing was saved — we never store unverified company data.`,
+      );
+    }
+    const careersUrl = await findCareersUrl(site);
+    const pages = (
+      await Promise.all([scrapePage(site), careersUrl ? scrapePage(careersUrl) : Promise.resolve(null)])
+    ).filter(Boolean) as { url: string; markdown: string }[];
 
-    if (!sources) {
-      throw new Error("Could not fetch live web data for this company. Try again shortly.");
+    if (pages.length === 0) {
+      throw new Error(
+        `The official site for "${data.name}" could not be read right now. Nothing was saved — we never store unverified company data.`,
+      );
     }
 
-    const prompt = `You are a placement research analyst. Using ONLY the web sources provided below, extract accurate, verifiable information about "${data.name}" for Indian campus placements. Do NOT invent facts. If a field is not supported by the sources, set it to null. Return ONLY a JSON object with this shape:
-{
-  "name": string,
-  "industry": string,
-  "description": string (2-3 sentences),
-  "website": string,
-  "careers_url": string,
-  "hq_location": string,
-  "min_cgpa": number|null (typical campus cutoff, e.g. 7.0),
-  "allowed_branches": string[] (e.g. ["CSE","IT","ECE"]),
-  "tech_stack": string[],
-  "salary_min": number|null (LPA, integer),
-  "salary_max": number|null (LPA, integer),
-  "hiring_season": string (e.g. "Autumn 2025"),
-  "process_steps": string[] (ordered),
-  "dsa_topics": string[],
-  "cs_subjects": string[]
-}
-No prose, no markdown, JSON only.
+    const sources = pages
+      .map((p, i) => `--- OFFICIAL SOURCE ${i + 1}: ${p.url} ---\n${p.markdown}`)
+      .join("\n\n");
 
-WEB SOURCES:
+    const prompt = `You are a data extraction engine. Extract ONLY facts that are explicitly stated in the OFFICIAL SOURCES below about "${data.name}". You must never guess, estimate, infer "typical" values, or use prior knowledge. If a field is not explicitly stated in the sources, it MUST be null (or an empty array). Salary, CGPA cutoffs, eligibility, hiring process, selection rounds, dates and required skills are especially sensitive: leave them null unless stated verbatim in the sources.
+
+Return ONLY a JSON object:
+{
+  "industry": string|null,
+  "description": string|null (2-3 sentences taken from the source content),
+  "hq_location": string|null,
+  "min_cgpa": number|null,
+  "allowed_branches": string[],
+  "tech_stack": string[],
+  "salary_min": number|null (LPA),
+  "salary_max": number|null (LPA),
+  "hiring_season": string|null,
+  "process_steps": string[],
+  "dsa_topics": string[],
+  "cs_subjects": string[],
+  "field_sources": { "<field name>": "<the exact source URL that states it>" }
+}
+Only include a key in "field_sources" for fields you filled from a source. JSON only, no prose.
+
+OFFICIAL SOURCES:
 ${sources}`;
 
     const result = await callGateway({
       messages: [
-        { role: "system", content: "You output strict JSON only. Ground every field in the provided web sources; use null when unsupported." },
+        {
+          role: "system",
+          content:
+            "You output strict JSON only. You are an extractor, not an analyst: every value must be explicitly present in the supplied official sources, otherwise null.",
+        },
         { role: "user", content: prompt },
       ],
     });
     const content = result.choices?.[0]?.message?.content ?? "";
     const parsed = extractJson(content) as Record<string, unknown>;
 
+    const officialUrls = new Set(pages.map((p) => p.url));
+    const rawFieldSources = (parsed.field_sources as Record<string, string> | undefined) ?? {};
+    // Validation: only keep facts attributed to a page we actually scraped.
+    const fieldSources: Record<string, string> = {};
+    for (const [k, v] of Object.entries(rawFieldSources)) {
+      if (typeof v === "string" && officialUrls.has(v)) fieldSources[k] = v;
+    }
+    const kept = <T>(field: string, value: T): T | null => (fieldSources[field] ? value : null);
+    const keptList = (field: string, value: unknown): string[] | null => {
+      const arr = Array.isArray(value) ? (value as string[]).filter((s) => typeof s === "string" && s.trim()) : [];
+      return fieldSources[field] && arr.length ? arr : null;
+    };
+
     const row = {
       slug,
-      name: (parsed.name as string) || data.name,
-      industry: (parsed.industry as string) ?? null,
+      name: data.name,
+      industry: kept("industry", (parsed.industry as string) ?? null),
       description: (parsed.description as string) ?? null,
-      website: (parsed.website as string) ?? null,
-      careers_url: (parsed.careers_url as string) ?? null,
-      hq_location: (parsed.hq_location as string) ?? null,
-      min_cgpa: (parsed.min_cgpa as number) ?? null,
-      allowed_branches: (parsed.allowed_branches as string[]) ?? null,
-      tech_stack: (parsed.tech_stack as string[]) ?? null,
-      salary_min: parsed.salary_min != null ? Math.round(Number(parsed.salary_min)) : null,
-      salary_max: parsed.salary_max != null ? Math.round(Number(parsed.salary_max)) : null,
-      hiring_season: (parsed.hiring_season as string) ?? null,
-      process_steps: (parsed.process_steps as string[]) ?? null,
-      dsa_topics: (parsed.dsa_topics as string[]) ?? null,
-      cs_subjects: (parsed.cs_subjects as string[]) ?? null,
+      website: site,
+      careers_url: careersUrl,
+      hq_location: kept("hq_location", (parsed.hq_location as string) ?? null),
+      min_cgpa: kept("min_cgpa", parsed.min_cgpa != null ? Number(parsed.min_cgpa) : null),
+      allowed_branches: keptList("allowed_branches", parsed.allowed_branches),
+      tech_stack: keptList("tech_stack", parsed.tech_stack),
+      salary_min: kept("salary_min", parsed.salary_min != null ? Math.round(Number(parsed.salary_min)) : null),
+      salary_max: kept("salary_max", parsed.salary_max != null ? Math.round(Number(parsed.salary_max)) : null),
+      hiring_season: kept("hiring_season", (parsed.hiring_season as string) ?? null),
+      process_steps: keptList("process_steps", parsed.process_steps),
+      dsa_topics: keptList("dsa_topics", parsed.dsa_topics),
+      cs_subjects: keptList("cs_subjects", parsed.cs_subjects),
+      field_sources: fieldSources,
+      source_name: hostOf(site),
+      source_url: careersUrl ?? site,
+      last_verified_at: new Date().toISOString(),
+      verification_status: "verified",
     };
+
 
     const { data: inserted, error } = await supabase
       .from("companies")
