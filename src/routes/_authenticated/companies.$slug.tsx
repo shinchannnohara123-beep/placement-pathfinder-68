@@ -5,6 +5,9 @@ import { ArrowLeft, ExternalLink, MapPin, GraduationCap, Briefcase, CheckCircle2
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { SourceBadge } from "@/components/source-badge";
+
+const UNVERIFIED = "Information unavailable or not verified.";
 
 export const Route = createFileRoute("/_authenticated/companies/$slug")({
   head: ({ loaderData }) => ({
@@ -137,7 +140,7 @@ function Stat({ label, value, icon: Icon }: { label: string; value: React.ReactN
   return (
     <div className="rounded-lg border border-border bg-mist/40 p-3">
       <div className="flex items-center gap-1 text-xs text-muted-foreground"><Icon className="h-3 w-3" /> {label}</div>
-      <div className="mt-1 font-display text-lg font-semibold">{value}</div>
+      <div className={`mt-1 font-display font-semibold ${value === UNVERIFIED ? "text-xs text-muted-foreground" : "text-lg"}`}>{value}</div>
     </div>
   );
 }
@@ -163,7 +166,7 @@ function BadgeList({ items }: { items: string[] }) {
 }
 
 function Empty() {
-  return <p className="text-sm text-muted-foreground">Not listed yet.</p>;
+  return <p className="text-sm text-muted-foreground">{UNVERIFIED}</p>;
 }
 
 type Company = {
