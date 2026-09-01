@@ -85,6 +85,7 @@ export type Database = {
           hq_location: string | null
           id: string
           industry: string | null
+          last_verified_at: string | null
           logo_url: string | null
           min_cgpa: number | null
           name: string
@@ -92,7 +93,10 @@ export type Database = {
           salary_max: number | null
           salary_min: number | null
           slug: string
+          source_name: string | null
+          source_url: string | null
           tech_stack: string[] | null
+          verification_status: string
           website: string | null
         }
         Insert: {
@@ -106,6 +110,7 @@ export type Database = {
           hq_location?: string | null
           id?: string
           industry?: string | null
+          last_verified_at?: string | null
           logo_url?: string | null
           min_cgpa?: number | null
           name: string
@@ -113,7 +118,10 @@ export type Database = {
           salary_max?: number | null
           salary_min?: number | null
           slug: string
+          source_name?: string | null
+          source_url?: string | null
           tech_stack?: string[] | null
+          verification_status?: string
           website?: string | null
         }
         Update: {
@@ -127,6 +135,7 @@ export type Database = {
           hq_location?: string | null
           id?: string
           industry?: string | null
+          last_verified_at?: string | null
           logo_url?: string | null
           min_cgpa?: number | null
           name?: string
@@ -134,8 +143,86 @@ export type Database = {
           salary_max?: number | null
           salary_min?: number | null
           slug?: string
+          source_name?: string | null
+          source_url?: string | null
           tech_stack?: string[] | null
+          verification_status?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      opportunities: {
+        Row: {
+          apply_url: string | null
+          branches: string[] | null
+          category: string
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          description: string | null
+          education_level: string | null
+          eligibility: Json
+          eligibility_text: string | null
+          graduation_years: number[] | null
+          id: string
+          last_verified_at: string | null
+          location: string | null
+          min_cgpa: number | null
+          organization: string
+          source_name: string | null
+          source_url: string | null
+          state: string | null
+          title: string
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          apply_url?: string | null
+          branches?: string[] | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          education_level?: string | null
+          eligibility?: Json
+          eligibility_text?: string | null
+          graduation_years?: number[] | null
+          id?: string
+          last_verified_at?: string | null
+          location?: string | null
+          min_cgpa?: number | null
+          organization: string
+          source_name?: string | null
+          source_url?: string | null
+          state?: string | null
+          title: string
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          apply_url?: string | null
+          branches?: string[] | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          education_level?: string | null
+          eligibility?: Json
+          eligibility_text?: string | null
+          graduation_years?: number[] | null
+          id?: string
+          last_verified_at?: string | null
+          location?: string | null
+          min_cgpa?: number | null
+          organization?: string
+          source_name?: string | null
+          source_url?: string | null
+          state?: string | null
+          title?: string
+          updated_at?: string
+          verification_status?: string
         }
         Relationships: []
       }
@@ -143,53 +230,113 @@ export type Database = {
         Row: {
           achievements: string | null
           branch: string | null
+          career_interests: string[] | null
+          certifications: Json
           cgpa: number | null
+          coding_profiles: Json
           college: string | null
           course: string | null
           created_at: string
+          current_semester: number | null
           degree: string | null
           dream_companies: string[] | null
           email: string | null
           full_name: string | null
           graduation_year: number | null
           id: string
+          preferred_roles: string[] | null
+          projects: Json
           skills: string[] | null
+          state: string | null
+          target_cgpa: number | null
+          university: string | null
           updated_at: string
           year_of_study: number | null
         }
         Insert: {
           achievements?: string | null
           branch?: string | null
+          career_interests?: string[] | null
+          certifications?: Json
           cgpa?: number | null
+          coding_profiles?: Json
           college?: string | null
           course?: string | null
           created_at?: string
+          current_semester?: number | null
           degree?: string | null
           dream_companies?: string[] | null
           email?: string | null
           full_name?: string | null
           graduation_year?: number | null
           id: string
+          preferred_roles?: string[] | null
+          projects?: Json
           skills?: string[] | null
+          state?: string | null
+          target_cgpa?: number | null
+          university?: string | null
           updated_at?: string
           year_of_study?: number | null
         }
         Update: {
           achievements?: string | null
           branch?: string | null
+          career_interests?: string[] | null
+          certifications?: Json
           cgpa?: number | null
+          coding_profiles?: Json
           college?: string | null
           course?: string | null
           created_at?: string
+          current_semester?: number | null
           degree?: string | null
           dream_companies?: string[] | null
           email?: string | null
           full_name?: string | null
           graduation_year?: number | null
           id?: string
+          preferred_roles?: string[] | null
+          projects?: Json
           skills?: string[] | null
+          state?: string | null
+          target_cgpa?: number | null
+          university?: string | null
           updated_at?: string
           year_of_study?: number | null
+        }
+        Relationships: []
+      }
+      resume_versions: {
+        Row: {
+          ai_suggested: Json
+          created_at: string
+          id: string
+          label: string
+          sections: Json
+          target_role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_suggested?: Json
+          created_at?: string
+          id?: string
+          label: string
+          sections?: Json
+          target_role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_suggested?: Json
+          created_at?: string
+          id?: string
+          label?: string
+          sections?: Json
+          target_role?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -222,6 +369,206 @@ export type Database = {
           is_primary?: boolean
           label?: string
           size_bytes?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      roadmap_progress: {
+        Row: {
+          completed_milestones: string[] | null
+          created_at: string
+          id: string
+          progress: number
+          stage_key: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_milestones?: string[] | null
+          created_at?: string
+          id?: string
+          progress?: number
+          stage_key: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_milestones?: string[] | null
+          created_at?: string
+          id?: string
+          progress?: number
+          stage_key?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_opportunities: {
+        Row: {
+          created_at: string
+          id: string
+          opportunity_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_opportunities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      semesters: {
+        Row: {
+          created_at: string
+          credits_earned: number | null
+          id: string
+          semester_number: number
+          sgpa: number | null
+          total_credits: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_earned?: number | null
+          id?: string
+          semester_number: number
+          sgpa?: number | null
+          total_credits?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_earned?: number | null
+          id?: string
+          semester_number?: number
+          sgpa?: number | null
+          total_credits?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          code: string | null
+          created_at: string
+          credits: number | null
+          difficulty: number | null
+          exam_date: string | null
+          external_marks: number | null
+          id: string
+          internal_marks: number | null
+          interview_topics: string[] | null
+          name: string
+          notes: string | null
+          progress: number
+          semester_number: number | null
+          target_grade: string | null
+          topics: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          credits?: number | null
+          difficulty?: number | null
+          exam_date?: string | null
+          external_marks?: number | null
+          id?: string
+          internal_marks?: number | null
+          interview_topics?: string[] | null
+          name: string
+          notes?: string | null
+          progress?: number
+          semester_number?: number | null
+          target_grade?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          credits?: number | null
+          difficulty?: number | null
+          exam_date?: string | null
+          external_marks?: number | null
+          id?: string
+          internal_marks?: number | null
+          interview_topics?: string[] | null
+          name?: string
+          notes?: string | null
+          progress?: number
+          semester_number?: number | null
+          target_grade?: string | null
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string
+          due_date: string
+          due_time: string | null
+          id: string
+          is_done: boolean
+          notes: string | null
+          priority: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string
+          due_time?: string | null
+          id?: string
+          is_done?: boolean
+          notes?: string | null
+          priority?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string
+          due_time?: string | null
+          id?: string
+          is_done?: boolean
+          notes?: string | null
+          priority?: string
+          title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
