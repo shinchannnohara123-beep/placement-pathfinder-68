@@ -8,6 +8,8 @@ import {
   Sparkles,
   ArrowRight,
   Target,
+  Map,
+  BarChart3,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { STATUS_LABEL, STATUS_TONE, type ApplicationStatus } from "@/lib/format";
+import { ProgressRing } from "@/components/widgets";
+import { usePlacementData } from "@/lib/use-placement-data";
+import { roadmapOverall, resumeCompleteness } from "@/lib/roadmap";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — PlacementPilot" }] }),
