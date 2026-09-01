@@ -47,12 +47,31 @@ function extractJson(text: string): unknown {
 
 type FcResult = { url?: string; title?: string; description?: string; markdown?: string };
 
+/** Thrown so the UI can show exactly which stage of ingestion failed. */
+export class IngestError extends Error {
+  stage: string;
+  constructor(stage: string, message: string) {
+    super(message);
+    this.stage = stage;
+    this.name = "IngestError";
+  }
+}
+
 async function firecrawlCall(path: string, body: Record<string, unknown>) {
   const lovKey = process.env.LOVABLE_API_KEY;
   const fcKey = process.env.FIRECRAWL_API_KEY;
-  if (!lovKey || !fcKey) return null;
+  if (!lovKey) {
+    throw new IngestError("auth", "Lovable AI key is missing on the server, so web verification cannot run.");
+  }
+  if (!fcKey) {
+    throw new IngestError(
+      "connection",
+      "The Firecrawl web-research connection is not linked to this project, so no official source can be fetched. Link Firecrawl in Connectors and try again.",
+    );
+  }
+  let res: Response;
   try {
-    const res = await fetch(`${FIRECRAWL_GATEWAY}${path}`, {
+    res = await fetch(`${FIRECRAWL_GATEWAY}${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -61,16 +80,31 @@ async function firecrawlCall(path: string, body: Record<string, unknown>) {
       },
       body: JSON.stringify(body),
     });
-    if (!res.ok) {
-      console.error(`Firecrawl ${path} failed`, res.status, await res.text().catch(() => ""));
-      return null;
-    }
-    return (await res.json()) as Record<string, unknown>;
   } catch (err) {
-    console.error(`Firecrawl ${path} error`, err);
-    return null;
+    throw new IngestError(
+      "network",
+      `Could not reach the web-research service (${path}): ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
+  if (!res.ok) {
+    const text = (await res.text().catch(() => "")).slice(0, 300);
+    if (res.status === 401 || res.status === 403) {
+      throw new IngestError(
+        "auth",
+        `Firecrawl authentication failed (${res.status}) on ${path}. The connection key is invalid, unlinked, or out of credits. Details: ${text}`,
+      );
+    }
+    if (res.status === 402) {
+      throw new IngestError("credits", `Firecrawl credits are exhausted (402). Details: ${text}`);
+    }
+    if (res.status === 429) {
+      throw new IngestError("rate_limit", `Firecrawl rate limit reached (429). Try again shortly.`);
+    }
+    throw new IngestError("firecrawl", `Firecrawl request ${path} failed (${res.status}). Details: ${text}`);
+  }
+  return (await res.json()) as Record<string, unknown>;
 }
+
 
 const BLOCKED_HOSTS = [
   "wikipedia.org", "glassdoor", "ambitionbox", "indeed", "naukri", "quora", "reddit",
