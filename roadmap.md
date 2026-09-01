@@ -1,0 +1,6 @@
+- [ ] Add reusable Phase 2 calculations and resume section helpers
+- [ ] Add Career Roadmap route with persisted milestone progress
+- [ ] Add Resume Studio route with profile-derived editable versions
+- [ ] Add Analytics route with real-data-only metrics and empty states
+- [ ] Integrate roadmap and resume completion into navigation/dashboard
+- [ ] Verify build and live preview
