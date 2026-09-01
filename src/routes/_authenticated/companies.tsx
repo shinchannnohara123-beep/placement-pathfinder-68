@@ -109,6 +109,15 @@ function CompaniesPage() {
                 placeholder="e.g. Atlassian, Zerodha, Stripe"
               />
             </div>
+            {addError && (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                <p className="font-medium text-destructive">Ingestion failed</p>
+                <p className="mt-1 whitespace-pre-wrap text-muted-foreground">{addError}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Nothing was saved. We only store facts found on a company's own official pages.
+                </p>
+              </div>
+            )}
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)} disabled={adding}>Cancel</Button>
               <Button onClick={onAdd} disabled={adding || !newName.trim()}>
