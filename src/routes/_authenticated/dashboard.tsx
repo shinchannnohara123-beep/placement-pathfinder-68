@@ -149,18 +149,46 @@ function DashboardPage() {
         </div>
 
         <div className="bento-card md:col-span-2">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 font-display text-lg font-semibold">
+              <CalendarDays className="h-4 w-4 text-primary" /> Today's tasks
+            </h3>
+            <Link to="/planner" className="text-sm text-primary hover:underline">Planner</Link>
+          </div>
+          {todayTasks.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-mist/50 p-4 text-center text-sm text-muted-foreground">
+              Nothing planned for today.
+              <div className="mt-2"><Link to="/planner"><Button size="sm">Add Task</Button></Link></div>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {todayTasks.slice(0, 5).map((t: any) => (
+                <li key={t.id} className="flex items-center justify-between gap-2 py-2 text-sm">
+                  <span className={`truncate ${t.is_done ? "text-muted-foreground line-through" : ""}`}>{t.title}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{t.due_time ? t.due_time.slice(0, 5) : t.priority}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3 text-xs text-muted-foreground">
+            {openTasks} open · {allTasks.length} total
+          </div>
+        </div>
+
+        <div className="bento-card md:col-span-2">
           <h3 className="font-display text-lg font-semibold">Quick actions</h3>
           <div className="mt-3 space-y-2">
+            <Link to="/planner"><Button variant="outline" className="w-full justify-start gap-2"><CalendarDays className="h-4 w-4" /> Planner</Button></Link>
             <Link to="/career"><Button variant="outline" className="w-full justify-start gap-2"><Map className="h-4 w-4" /> Career Roadmap</Button></Link>
             <Link to="/resume"><Button variant="outline" className="w-full justify-start gap-2"><FileText className="h-4 w-4" /> Resume Studio</Button></Link>
             <Link to="/analytics"><Button variant="outline" className="w-full justify-start gap-2"><BarChart3 className="h-4 w-4" /> Analytics</Button></Link>
             <Link to="/companies"><Button variant="outline" className="w-full justify-start gap-2"><Building2 className="h-4 w-4" /> Explore companies</Button></Link>
-            <Link to="/applications"><Button variant="outline" className="w-full justify-start gap-2"><Briefcase className="h-4 w-4" /> Add application</Button></Link>
           </div>
           <div className="mt-4 rounded-lg bg-mist p-3 text-xs text-muted-foreground">
             {companies.data ?? 0} companies in the directory · updated weekly.
           </div>
         </div>
+
 
         <div className="bento-card md:col-span-3">
           <div className="mb-3 flex items-center justify-between">
