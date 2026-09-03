@@ -76,10 +76,16 @@ function DashboardPage() {
     profile.data?.user?.email?.split("@")[0] ??
     "there";
 
-  const { stages } = usePlacementData();
+  const { stages, raw } = usePlacementData();
   const roadmapPct = roadmapOverall(stages);
   const nextStage = stages.find((s) => s.status !== "completed");
   const { checks: resumeChecks, percent: resumePct } = resumeCompleteness(profile.data?.profile ?? null, null);
+
+  const allTasks = raw.tasks ?? [];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayTasks = allTasks.filter((t: any) => t.due_date === todayStr);
+  const openTasks = allTasks.filter((t: any) => !t.is_done).length;
+
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
