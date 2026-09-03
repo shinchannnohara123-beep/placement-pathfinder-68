@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Building2, Briefcase, FileText, LogOut, Rocket, User, Sparkles, Map, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Building2, Briefcase, FileText, LogOut, Rocket, User, Sparkles, Map, BarChart3, CalendarDays, GraduationCap } from "lucide-react";
 
 import {
   Sidebar,
@@ -16,14 +16,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Planner", url: "/planner", icon: CalendarDays },
   { title: "Companies", url: "/companies", icon: Building2 },
   { title: "Applications", url: "/applications", icon: Briefcase },
   { title: "Career Roadmap", url: "/career", icon: Map },
   { title: "Resume Studio", url: "/resume", icon: FileText },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Alumni Connect", url: "/alumni", icon: GraduationCap },
   { title: "AI Mentor", url: "/mentor", icon: Sparkles },
   { title: "Profile", url: "/profile", icon: User },
 ];
+
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
