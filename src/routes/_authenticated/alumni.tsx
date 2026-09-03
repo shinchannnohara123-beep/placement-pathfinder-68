@@ -864,7 +864,7 @@ function InsightDialog({
   userId: string | null;
   onSaved: () => void;
 }) {
-  const [category, setCategory] = useState(INSIGHT_CATEGORIES[0]!.value);
+  const [category, setCategory] = useState<string>(INSIGHT_CATEGORIES[0]!.value);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [resources, setResources] = useState("");
