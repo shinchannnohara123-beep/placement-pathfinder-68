@@ -513,6 +513,9 @@ export type Database = {
           id: string
           is_primary: boolean
           label: string
+          parsed: Json
+          parsed_at: string | null
+          parsed_text: string | null
           size_bytes: number | null
           user_id: string
         }
@@ -523,6 +526,9 @@ export type Database = {
           id?: string
           is_primary?: boolean
           label: string
+          parsed?: Json
+          parsed_at?: string | null
+          parsed_text?: string | null
           size_bytes?: number | null
           user_id: string
         }
@@ -533,6 +539,9 @@ export type Database = {
           id?: string
           is_primary?: boolean
           label?: string
+          parsed?: Json
+          parsed_at?: string | null
+          parsed_text?: string | null
           size_bytes?: number | null
           user_id?: string
         }
