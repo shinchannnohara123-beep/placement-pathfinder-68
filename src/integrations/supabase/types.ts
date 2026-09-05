@@ -14,124 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      alumni_insights: {
-        Row: {
-          alumni_id: string
-          category: string
-          content: string
-          created_at: string
-          id: string
-          is_published: boolean
-          resources: string[]
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          alumni_id: string
-          category?: string
-          content: string
-          created_at?: string
-          id?: string
-          is_published?: boolean
-          resources?: string[]
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          alumni_id?: string
-          category?: string
-          content?: string
-          created_at?: string
-          id?: string
-          is_published?: boolean
-          resources?: string[]
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "alumni_insights_alumni_id_fkey"
-            columns: ["alumni_id"]
-            isOneToOne: false
-            referencedRelation: "alumni_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      alumni_profiles: {
-        Row: {
-          branch: string | null
-          career_field: string | null
-          career_journey: string | null
-          college: string | null
-          company_id: string | null
-          created_at: string
-          current_company: string | null
-          full_name: string
-          graduation_year: number | null
-          guidance_areas: string[]
-          id: string
-          is_public: boolean
-          mentoring_status: string
-          photo_url: string | null
-          role_title: string | null
-          skills: string[]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          branch?: string | null
-          career_field?: string | null
-          career_journey?: string | null
-          college?: string | null
-          company_id?: string | null
-          created_at?: string
-          current_company?: string | null
-          full_name: string
-          graduation_year?: number | null
-          guidance_areas?: string[]
-          id?: string
-          is_public?: boolean
-          mentoring_status?: string
-          photo_url?: string | null
-          role_title?: string | null
-          skills?: string[]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          branch?: string | null
-          career_field?: string | null
-          career_journey?: string | null
-          college?: string | null
-          company_id?: string | null
-          created_at?: string
-          current_company?: string | null
-          full_name?: string
-          graduation_year?: number | null
-          guidance_areas?: string[]
-          id?: string
-          is_public?: boolean
-          mentoring_status?: string
-          photo_url?: string | null
-          role_title?: string | null
-          skills?: string[]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "alumni_profiles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       applications: {
         Row: {
           applied_date: string | null
@@ -272,50 +154,6 @@ export type Database = {
         }
         Relationships: []
       }
-      guidance_requests: {
-        Row: {
-          alumni_id: string
-          career_area: string | null
-          created_at: string
-          id: string
-          message: string
-          status: string
-          student_id: string
-          topic: string
-          updated_at: string
-        }
-        Insert: {
-          alumni_id: string
-          career_area?: string | null
-          created_at?: string
-          id?: string
-          message: string
-          status?: string
-          student_id: string
-          topic: string
-          updated_at?: string
-        }
-        Update: {
-          alumni_id?: string
-          career_area?: string | null
-          created_at?: string
-          id?: string
-          message?: string
-          status?: string
-          student_id?: string
-          topic?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guidance_requests_alumni_id_fkey"
-            columns: ["alumni_id"]
-            isOneToOne: false
-            referencedRelation: "alumni_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       opportunities: {
         Row: {
           apply_url: string | null
@@ -394,6 +232,8 @@ export type Database = {
       profiles: {
         Row: {
           achievements: string | null
+          analytics: Json
+          ats_report: Json
           branch: string | null
           career_interests: string[] | null
           certifications: Json
@@ -409,8 +249,11 @@ export type Database = {
           full_name: string | null
           graduation_year: number | null
           id: string
+          planner_plan: Json
           preferred_roles: string[] | null
           projects: Json
+          resume_data: Json
+          roadmap_plan: Json
           skills: string[] | null
           state: string | null
           target_cgpa: number | null
@@ -420,6 +263,8 @@ export type Database = {
         }
         Insert: {
           achievements?: string | null
+          analytics?: Json
+          ats_report?: Json
           branch?: string | null
           career_interests?: string[] | null
           certifications?: Json
@@ -435,8 +280,11 @@ export type Database = {
           full_name?: string | null
           graduation_year?: number | null
           id: string
+          planner_plan?: Json
           preferred_roles?: string[] | null
           projects?: Json
+          resume_data?: Json
+          roadmap_plan?: Json
           skills?: string[] | null
           state?: string | null
           target_cgpa?: number | null
@@ -446,6 +294,8 @@ export type Database = {
         }
         Update: {
           achievements?: string | null
+          analytics?: Json
+          ats_report?: Json
           branch?: string | null
           career_interests?: string[] | null
           certifications?: Json
@@ -461,8 +311,11 @@ export type Database = {
           full_name?: string | null
           graduation_year?: number | null
           id?: string
+          planner_plan?: Json
           preferred_roles?: string[] | null
           projects?: Json
+          resume_data?: Json
+          roadmap_plan?: Json
           skills?: string[] | null
           state?: string | null
           target_cgpa?: number | null
