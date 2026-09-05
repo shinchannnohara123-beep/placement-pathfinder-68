@@ -22,7 +22,7 @@ const items = [
   { title: "Career Roadmap", url: "/career", icon: Map },
   { title: "Resume Studio", url: "/resume", icon: FileText },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Alumni Connect", url: "/alumni", icon: GraduationCap },
+  
   { title: "AI Mentor", url: "/mentor", icon: Sparkles },
   { title: "Profile", url: "/profile", icon: User },
 ];
