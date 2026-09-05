@@ -479,19 +479,46 @@ function Uploads() {
       setBusy(false);
       return toast.error(upErr.message);
     }
-    const { error } = await supabase.from("resumes").insert({
-      user_id: u.user.id,
-      label,
-      file_path: path,
-      size_bytes: file.size,
-      is_primary: (list.data?.length ?? 0) === 0,
-    });
+    const { data: inserted, error } = await supabase
+      .from("resumes")
+      .insert({
+        user_id: u.user.id,
+        label,
+        file_path: path,
+        size_bytes: file.size,
+        is_primary: (list.data?.length ?? 0) === 0,
+      })
+      .select("id")
+      .single();
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Resume uploaded");
+    const uploaded = file;
     setFile(null);
     setLabel("Main resume");
     qc.invalidateQueries({ queryKey: ["resumes"] });
+
+    // Parse → ATS → roadmap → planner, in the background so the UI stays responsive.
+    if (inserted?.id) {
+      void (async () => {
+        const { processResumeUpload, syncPlannerFromRoadmap, recomputeAnalytics } = await import(
+          "@/lib/career-pipeline"
+        );
+        const outcome = await processResumeUpload({ file: uploaded, resumeId: inserted.id });
+        if (!outcome.analysed) {
+          if (outcome.error) toast.error(outcome.error);
+        } else {
+          try {
+            await syncPlannerFromRoadmap();
+            await recomputeAnalytics();
+          } catch {
+            /* planner sync is best-effort */
+          }
+          toast.success("Resume analysed — ATS report, roadmap and planner updated");
+        }
+        qc.invalidateQueries();
+      })();
+    }
   };
 
   const remove = useMutation({
